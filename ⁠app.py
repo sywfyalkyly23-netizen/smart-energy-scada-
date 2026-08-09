@@ -1,8 +1,28 @@
-import streamlit as st
-import pandas as pd
 import numpy as np
-import plotly.graph_objects as go
+import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
+import streamlit as st
+
+st.set_page_config(
+    page_title="نظام محاكاة وإدارة الأحمال الذكية", layout="wide"
+)
+
+st.markdown(
+    """
+    <style>
+    #MainMenu {visibility: hidden;}
+    header {visibility: hidden;}
+    footer {visibility: hidden;}
+    
+    .stAppViewerToolbar {display: none !important;}
+    div[data-testid="stToolbar"] {visibility: hidden !important; display: none !important;}
+    .viewerBadge_link__1S137 {display: none !important;}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 
 # إعداد الصفحة لتكون عريضة وذات طابع هندسي داكن
 st.set_page_config(page_title="نظام محاكاة وإدارة الأحمال الذكية", layout="wide", page_icon="⚡")
