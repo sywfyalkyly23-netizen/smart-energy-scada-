@@ -1,3 +1,15 @@
+import subprocess
+import sys
+
+def install_packages():
+    required = {'streamlit', 'pandas', 'numpy', 'plotly'}
+    installed = {pkg.key for pkg in __import__('pkg_resources').working_set}
+    missing = required - installed
+    if missing:
+        subprocess.check_call([sys.executable, '-m', 'pip', 'install', *missing])
+
+install_packages()
+
 import streamlit as st
 import pandas as pd
 import numpy as np
