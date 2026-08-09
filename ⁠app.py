@@ -20,10 +20,7 @@ st.markdown(
     .viewerBadge_link__1S137 {display: none !important;}
     </style>
     """,
-    unsafe_allow_html=True,
-)
-
-
+    unsafe_allow_html= 
 # إعداد الصفحة لتكون عريضة وذات طابع هندسي داكن
 st.set_page_config(page_title="نظام محاكاة وإدارة الأحمال الذكية", layout="wide", page_icon="⚡")
 
