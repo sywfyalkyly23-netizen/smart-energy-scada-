@@ -24,7 +24,6 @@ with open("index.html", "r", encoding="utf-8") as f:
 
 components.html(html_content, height=800, scrolling=True)
 
-    HTML (index.html)
 
 def load_html_template(file_path):
     if os.path.exists(file_path):
