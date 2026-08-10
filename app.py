@@ -16,7 +16,6 @@ def patch_streamlit_pwa():
             with open(index_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
-            # التحقق مما إذا كان قد تم التعديل مسبقاً لمنع التكرار
             if 'apple-mobile-web-app-capable' not in content:
                 pwa_tags = """
     <!-- Apple Mobile Web App Metadata for iOS PWA -->
@@ -34,7 +33,6 @@ def patch_streamlit_pwa():
       }
     </style>
                 """
-                # إدخال الأكواد قبل نهاية وسم </head>
                 if "</head>" in content:
                     content = content.replace("</head>", f"{pwa_tags}\n</head>")
                     with open(index_path, "w", encoding="utf-8") as f:
@@ -42,368 +40,481 @@ def patch_streamlit_pwa():
     except Exception:
         pass
 
-# تشغيل الترقية التلقائية للملف التعريفي
 patch_streamlit_pwa()
 
 # إعداد الصفحة لتكون عريضة ومحسنة مع أيقونة هندسية
 st.set_page_config(
-    page_title="نظام محاكاة وإدارة الأحمال الذكية",
+    page_title="الأحمال الذكية SCADA",
     layout="wide",
     page_icon="⚡"
 )
 
 # ==========================================
-# 2. تنسيق CSS مخصص للواجهة الصناعية المحسنة لهواتف آيفون (Responsive iOS Design)
+# 2. إدارة قاعدة البيانات وقيم الجلسات (Session State Database)
+# ==========================================
+# تهيئة حالة الغرف والأجهزة التفاعلية
+if 'rooms_state' not in st.session_state:
+    st.session_state.rooms_state = {
+        "غرفة الأبحاث (101)": {
+            "مكيف 1 (AC-1)": {"status": True, "power": 2.0, "icon": "❄️"},
+            "مصباح رئيسي": {"status": True, "power": 0.04, "icon": "💡"},
+            "إضاءة ديكور": {"status": False, "power": 0.04, "icon": "✨"}
+        },
+        "قاعة المحاضرات (102)": {
+            "مكيف 2 (AC-2)": {"status": False, "power": 2.2, "icon": "❄️"},
+            "مروحة السقف": {"status": True, "power": 0.07, "icon": "🌀"},
+            "مصباح 1": {"status": True, "power": 0.04, "icon": "💡"}
+        },
+        "معمل الدراسات (103)": {
+            "مكيف 3 (AC-3)": {"status": True, "power": 2.0, "icon": "❄️"},
+            "مصباح رئيسي": {"status": True, "power": 0.04, "icon": "💡"}
+        }
+    }
+
+if 'active_tab' not in st.session_state:
+    st.session_state.active_tab = "home"
+
+if 'active_room' not in st.session_state:
+    st.session_state.active_room = None
+
+if 'chat_history' not in st.session_state:
+    st.session_state.chat_history = [
+        {"role": "assistant", "content": "مرحباً بك في نظام SCADA الذكي! أنا مساعدك المدعوم بالذكاء الاصطناعي الكامل. يمكنك سؤالي عن أي شيء يخص النظام، كيفية التحكم، التوصيل بالـ ESP32، التعرفة المالية، أو نصائح توفير الطاقة."}
+    ]
+
+# ==========================================
+# 3. تنسيق CSS مخصص للواجهة الاحترافية (iOS UI/UX Custom Styling)
 # ==========================================
 st.markdown("""
 <style>
-    /* إخفاء القوائم والترويسات الافتراضية غير المرغوبة مع الحفاظ على زر القائمة الجانبية */
+    /* إخفاء القوائم والترويسات غير المرغوبة بالكامل لجعلها واجهة تطبيق أصيل */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     .viewerBadge_link__1S137 {display: none !important;}
-
-    /* إخفاء أزرار النشر والقائمة الإضافية لتطبيق أنيق */
     button[data-testid="stBaseButton-header"] { display: none !important; }
     button[data-testid="stMainMenuButton"] { display: none !important; }
-
-    /* جعل الهيدر شفافاً ومناسباً لواجهة الهاتف */
-    .stAppHeader {
-        background-color: transparent !important;
-        background: transparent !important;
-    }
-    header {
-        background-color: transparent !important;
-        background: transparent !important;
-    }
-
-    /* تلوين وتكبير زر التحكم في الشريط الجانبي ليسهل الضغط عليه في الآيفون */
-    button[data-testid="stExpandSidebarButton"],
-    button[data-testid="stBaseButton-headerNoPadding"] {
-        background-color: rgba(31, 7, 7, 0.8) !important;
-        border: 1px solid #ef4444 !important;
-        border-radius: 50% !important;
-        color: #ffffff !important;
-        width: 44px !important;
-        height: 44px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4) !important;
-        z-index: 999999 !important;
-        margin: 8px !important;
-    }
+    div[data-testid="stSidebarCollapseButton"] { display: none !important; }
+    section[data-testid="stSidebar"] { display: none !important; }
 
     /* خلفية التطبيق والمظهر العام للأيفون مع مراعاة الحواف والمستشعرات */
     html, body, [data-testid="stAppViewContainer"] {
-        background-color: #0c0202 !important;
+        background-color: #000000 !important;
         color: #fca5a5 !important;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        padding-top: env(safe-area-inset-top, 12px) !important;
-        padding-bottom: env(safe-area-inset-bottom, 12px) !important;
-        padding-left: env(safe-area-inset-left, 8px) !important;
-        padding-right: env(safe-area-inset-right, 8px) !important;
+        padding-top: env(safe-area-inset-top, 5px) !important;
+        padding-bottom: env(safe-area-inset-bottom, 5px) !important;
     }
 
-    .main {
-        background-color: #0c0202 !important;
+    .main .block-container {
+        max-width: 480px !important;
+        margin: 0 auto !important;
+        padding: 10px 14px 80px 14px !important;
     }
 
-    /* تحسين تصميم الكروت والمؤشرات لتشبه ودجات الأيفون (iOS Widgets) */
+    /* تجميل وتعديل أشرطة التصفح العلوية والسفلية */
+    .stAppHeader {
+        background-color: transparent !important;
+    }
+
+    /* تصميم ودجات الأيفون الفاخرة (iOS Widgets) */
     div[data-testid="stMetric"] {
-        background: linear-gradient(135deg, #1f0707 0%, #120303 100%) !important;
-        padding: 16px !important;
-        border-radius: 18px !important;
-        border: 1px solid #4a1212 !important;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.5) !important;
+        background: linear-gradient(135deg, #120303 0%, #050101 100%) !important;
+        padding: 14px !important;
+        border-radius: 20px !important;
+        border: 1px solid #2b0a0a !important;
+        box-shadow: 0 4px 20px rgba(239, 68, 68, 0.15) !important;
         text-align: center !important;
-        transition: transform 0.2s, border-color 0.2s;
-    }
-    div[data-testid="stMetric"]:hover {
-        transform: scale(1.02);
-        border-color: #ef4444 !important;
     }
 
     div[data-testid="stMetricLabel"] {
         color: #fbcfe8 !important;
-        font-size: 13px !important;
+        font-size: 12px !important;
         font-weight: 600 !important;
-        letter-spacing: 0.5px;
     }
     div[data-testid="stMetricValue"] {
         color: #ffffff !important;
-        font-size: 20px !important;
+        font-size: 18px !important;
         font-weight: 800 !important;
     }
 
-    /* تجميل الشريط الجانبي في الموبايل */
-    section[data-testid="stSidebar"] {
-        background-color: #120303 !important;
-        border-right: 1px solid #2b0a0a !important;
-    }
-
-    /* تجميل أزرار الأوامر لتناسب شاشات اللمس (Touch Targets) */
-    .stButton button {
-        background: linear-gradient(90deg, #b91c1c 0%, #ef4444 100%) !important;
+    /* تحسين تصميم مفاتيح التبديل (Toggles) */
+    div[data-testid="stCheckbox"] label, div[data-testid="stWidget"] label {
         color: #ffffff !important;
-        border-radius: 12px !important;
-        border: none !important;
-        padding: 12px 24px !important;
-        font-weight: bold !important;
-        width: 100% !important;
-        box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3) !important;
-        transition: transform 0.1s;
-    }
-    .stButton button:active {
-        transform: scale(0.98);
-        background: #991b1b !important;
+        font-weight: 600 !important;
     }
 
-    /* تحسين تصميم الجداول والبيانات لتلائم الهاتف */
-    .stDataFrame {
+    /* تصميم كروت الغرف الفاخرة */
+    .room-card {
+        background: linear-gradient(135deg, #1f0707 0%, #0d0202 100%);
+        border: 1px solid #4a1212;
+        border-radius: 24px;
+        padding: 20px;
+        margin-bottom: 16px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        transition: transform 0.2s, border-color 0.2s;
+    }
+    .room-card:active {
+        transform: scale(0.97);
+        border-color: #ef4444;
+    }
+
+    /* تصميم أزرار التنقل (iOS Tab Bar) في الأعلى كـ Segmented Control */
+    .tab-container {
+        display: flex;
+        justify-content: space-around;
+        background: rgba(26, 6, 6, 0.85);
+        backdrop-filter: blur(20px);
+        border: 1px solid #3b0d0d;
+        border-radius: 16px;
+        padding: 4px;
+        margin-bottom: 20px;
+        box-shadow: 0 8px 32px rgba(239, 68, 68, 0.1);
+    }
+
+    /* تجميل أزرار الأوامر والعودة */
+    .stButton button {
         border-radius: 14px !important;
-        overflow: hidden !important;
-        border: 1px solid #3b0d0d !important;
+        font-weight: 700 !important;
+        transition: all 0.2s ease;
     }
 
-    /* تعديل الهوامش والأبعاد للهواتف */
-    @media (max-width: 768px) {
-        .block-container {
-            padding-top: 10px !important;
-            padding-bottom: 10px !important;
-        }
-        h1 {
-            font-size: 1.6rem !important;
-        }
-        h2 {
-            font-size: 1.2rem !important;
-        }
+    /* صندوق المحادثة للذكاء الاصطناعي */
+    .chat-bubble-user {
+        background-color: #ef4444 !important;
+        color: #ffffff !important;
+        border-radius: 18px 18px 2px 18px !important;
+        padding: 12px 16px !important;
+        margin: 8px 0;
+        text-align: right;
+        display: inline-block;
+        max-width: 85%;
+        float: right;
+        clear: both;
+        box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
+    }
+    .chat-bubble-assistant {
+        background-color: #1a0606 !important;
+        border: 1px solid #4a1212 !important;
+        color: #fbcfe8 !important;
+        border-radius: 18px 18px 18px 2px !important;
+        padding: 12px 16px !important;
+        margin: 8px 0;
+        text-align: right;
+        display: inline-block;
+        max-width: 85%;
+        float: left;
+        clear: both;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
     }
 </style>
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 3. إدارة قاعدة البيانات وقيم الجلسات (Session State Database)
+# 4. ترويسة التطبيق واللوغو الذكي
 # ==========================================
-if 'initial_halls' not in st.session_state:
-    st.session_state.initial_halls = {
-        "جامعة العين - قاعة الأبحاث (101)": {"مكيف 1 (AC-1)": 2.0, "مصباح 1": 0.04, "مصباح 2": 0.04},
-        "جامعة العين - قاعة المحاضرات (102)": {"مكيف 1 (AC-1)": 2.0, "مروحة السقف": 0.07, "مصباح 1": 0.04},
-        "جامعة العين - معمل الدراسات (103)": {"مكيف 1 (AC-1)": 2.0, "مصباح 1": 0.04}
-    }
-
-# العنوان الرئيسي للتطبيق بنقوش هندسية
 st.markdown(
     """
-    <div style="background: linear-gradient(95deg, #4a0e0e 0%, #170404 100%); padding: 18px; border-radius: 14px; border-right: 6px solid #ef4444; text-align: right; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.4);">
-        <h1 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 800;">🔴 نظام محاكاة وإدارة الأحمال الذكية (SCADA & IoT)</h1>
-        <p style="margin: 5px 0 0 0; color: #fca5a5; font-size: 12px; font-weight: 500;">بوابة المراقبة والتحكم الذكي وحماية الأحمال المصممة للأجهزة الذكية.</p>
+    <div style="text-align: center; margin-bottom: 15px; margin-top: 10px;">
+        <span style="font-size: 32px; filter: drop-shadow(0 0 10px #ef4444);">⚡</span>
+        <h2 style="margin: 5px 0 0 0; color: #ffffff; font-size: 19px; font-weight: 800; letter-spacing: 0.5px;">نظام SCADA للأحمال الذكية</h2>
+        <p style="margin: 2px 0 0 0; color: #ef4444; font-size: 11px; font-weight: 600; text-transform: uppercase;">Smart PWA App for iOS</p>
     </div>
     """,
     unsafe_allow_html=True
 )
 
 # ==========================================
-# 4. شريط التحكم والمدخلات الجانبي (Sidebar Interface)
+# 5. شريط التبويبات الفاخر (Segmented Control / iOS Tab Bar)
 # ==========================================
-st.sidebar.markdown("<div style='text-align: right;'><h3>📂 لوحة التحكم الرئيسية</h3></div>", unsafe_allow_html=True)
-navigation_page = st.sidebar.selectbox(
-    "اختر قسم المعرض:",
-    [
-        "1️⃣ لوحة التشغيل والتحكم الافتراضي",
-        "2️⃣ هندسة وتعديل المباني والقاعات",
-        "3️⃣ شاشة الحساسات الحية ومؤشرات SCADA",
-        "4️⃣ المخططات والتحليلات البيانية",
-        "5️⃣ التقارير المالية وجداول الاستهلاك",
-        "6️⃣ مركز التنبيهات وحماية الشبكة",
-        "7️⃣ الدعم الفني وربط اللوحات المصغرة",
-        "📱 دليل التثبيت على الأيفون (PWA)"
-    ]
-)
+tab_cols = st.columns(5)
+tabs_info = [
+    {"id": "home", "label": "🏠 الرئيسية"},
+    {"id": "rooms", "label": "🎛️ الغرف"},
+    {"id": "ai", "label": "💬 الذكاء"},
+    {"id": "stats", "label": "📊 الرادار"},
+    {"id": "pwa", "label": "📱 التثبيت"}
+]
 
-st.sidebar.markdown("---")
-tariff_rate = st.sidebar.number_input("التعرفة (دينار / kWh)", value=50, step=1)
-threshold_kw = st.sidebar.number_input("عتبة الفصل الآلي (kW)", value=5.0, step=0.5)
+for i, t in enumerate(tabs_info):
+    with tab_cols[i]:
+        is_active = st.session_state.active_tab == t["id"]
+        btn_style = "primary" if is_active else "secondary"
+        if st.button(t["label"], key=f"btn_tab_{t['id']}", use_container_width=True, type=btn_style):
+            st.session_state.active_tab = t["id"]
+            st.rerun()
 
-st.sidebar.markdown("---")
-st.sidebar.markdown("<div style='text-align: right;'><h4>🎛️ أدوات التشغيل الفوري</h4></div>", unsafe_allow_html=True)
-hall_names = list(st.session_state.initial_halls.keys())
-selected_hall = st.sidebar.selectbox("المبنى أو القاعة المستهدفة", hall_names)
-
-available_devices = list(st.session_state.initial_halls[selected_hall].keys()) if selected_hall in st.session_state.initial_halls else []
-target_appliance = st.sidebar.selectbox("الجهاز المستهدف بالتحكم", available_devices if available_devices else ["لا توجد أجهزة"])
-user_action = st.sidebar.radio("حالة الأمر", ["تشغيل 🟢", "إطفاء 🔴"])
+st.markdown("<hr style='margin: 10px 0 15px 0; border: 0; border-top: 1px solid #1a0606;' />", unsafe_allow_html=True)
 
 # ==========================================
-# 5. معالجة بيانات الحسابات ونظام الحماية اللحظي
+# 6. الحسابات والعمليات المشتركة للنظام
 # ==========================================
-detailed_data = []
-hall_summaries = []
-notifications = ["📌 **حالة النظام:** نظام المحاكاة يعمل بكفاءة تامة."]
+# الثوابت
+tariff_rate = 50.0  # دينار / kWh
+threshold_kw = 5.0  # حد الفصل الآلي للأمان لحماية الشبكة
+
 total_system_power = 0.0
-active_count = 0
-load_categories = {"التكييف ❄️": 0.0, "الإضاءة 💡": 0.0, "أجهزة أخرى ⚙️": 0.0}
+active_devices_count = 0
+detailed_rows = []
+category_power = {"التكييف ❄️": 0.0, "الإضاءة 💡": 0.0, "أخرى ⚙️": 0.0}
+notifications = []
 
-for hall, devices in st.session_state.initial_halls.items():
-    hall_power = 0.0
-    hall_device_states = {}
+# معالجة وحساب القدرات المستهلكة لحظياً
+for room, devices in st.session_state.rooms_state.items():
+    room_power = 0.0
+    for dev_name, info in devices.items():
+        if info["status"]:
+            room_power += info["power"]
+            active_devices_count += 1
+            if "مكيف" in dev_name:
+                category_power["التكييف ❄️"] += info["power"]
+            elif "مصباح" in dev_name or "إضاءة" in dev_name:
+                category_power["الإضاءة 💡"] += info["power"]
+            else:
+                category_power["أخرى ⚙️"] += info["power"]
 
-    for dev, pwr in devices.items():
-        state = "يعمل 🟢"
-        current_pwr = pwr
+    # نظام الفصل التلقائي والإنقاذ اللحظي لحماية تمديدات القاعة
+    if room_power > threshold_kw:
+        notifications.append(f"⚠️ [فصل آلي لحماية {room}]: تجاوز الحمل الحد المسموح ({round(room_power, 2)} kW). تم فصل المكيفات فوراً!")
+        # إطفاء الأجهزة الثقيلة في القاعة لحماية الشبكة
+        for dev_name in devices:
+            if "مكيف" in dev_name:
+                st.session_state.rooms_state[room][dev_name]["status"] = False
+        # إعادة حساب طاقة القاعة بعد فصل المكيف
+        room_power = sum(info["power"] for info in devices.values() if info["status"])
 
-        if hall == selected_hall and dev == target_appliance:
-            if user_action == "إطفاء 🔴":
-                state = "منطفئ 🔴"
-                current_pwr = 0.0
+    total_system_power += room_power
 
-        hall_device_states[dev] = {"state": state, "power": current_pwr}
-        hall_power += current_pwr
-
-    # نظام الحماية التلقائي والإنقاذ اللحظي للأحمال
-    if hall_power > threshold_kw:
-        notifications.append(f"🚨 **[إنذار حماية الأحمال]:** تجاوزت الطاقة في **{hall}** القيمة المسموحة ({round(hall_power, 2)} kW). **تم تفعيل الفصل الآلي للأجهزة الثقيلة!**")
-        hall_power = 0.0
-        for dev in hall_device_states:
-            if "مكيف" in dev:
-                hall_device_states[dev]["state"] = "مفصول حماية ⚡"
-                hall_device_states[dev]["power"] = 0.0
-            hall_power += hall_device_states[dev]["power"]
-
-    for dev, info in hall_device_states.items():
-        pwr = info["power"]
-        st_val = info["state"]
-        if "يعمل" in st_val:
-            active_count += 1
-            if "مكيف" in dev: load_categories["التكييف ❄️"] += pwr
-            elif "مصباح" in dev or "إضاءة" in dev: load_categories["الإضاءة 💡"] += pwr
-            else: load_categories["أجهزة أخرى ⚙️"] += pwr
-
-        m_kwh = round(pwr * 8 * 30, 2)
-        m_cost = round(m_kwh * tariff_rate, 2)
-        detailed_data.append({
-            "المبنى / القاعة": hall,
-            "الجهاز": dev,
-            "الحالة": st_val,
-            "القدرة (kW)": pwr,
-            "الاستهلاك الشهري (kWh)": m_kwh,
-            "التكلفة (دينار)": f"{m_cost:,.0f}"
-        })
-
-    total_system_power += hall_power
-    hall_summaries.append({
-        "المبنى / القاعة": hall,
-        "القدرة اللحظية (kW)": round(hall_power, 2),
-        "الاستهلاك الشهري (kWh)": round(hall_power * 8 * 30, 2),
-        "التكلفة الشهرية (دينار)": round(hall_power * 8 * 30 * tariff_rate, 0)
-    })
-
-df_app = pd.DataFrame(detailed_data)
-df_hall = pd.DataFrame(hall_summaries)
-total_bill = total_system_power * 8 * 30 * tariff_rate
+total_system_power = round(total_system_power, 2)
+monthly_bill = round(total_system_power * 8 * 30 * tariff_rate, 0)
 
 # ==========================================
-# 6. شاشة الودجات العلوية على الأيفون (iOS Metric Cards)
+# 7. عرض الشاشات والواجهات التفاعلية (Views)
 # ==========================================
-col1, col2, col3, col4 = st.columns(4)
-col1.metric("⚡ إجمالي القدرة", f"{round(total_system_power, 2)} kW")
-col2.metric("🔌 الأجهزة النشطة", f"{active_count} جهاز")
-col3.metric("💰 التكلفة الشهرية", f"{total_bill:,.0f} IQD")
-col4.metric("🛡️ حالة النظام", "⚠️ حماية نشطة" if len(notifications) > 1 else "مستقر وآمن 🟢")
 
-st.markdown("---")
+# --- الشاشة الأولى: الرئيسية ---
+if st.session_state.active_tab == "home":
+    # كروت المؤشرات اللحظية على واجهة الموبايل
+    m1, m2 = st.columns(2)
+    with m1:
+        st.metric("⚡ القدرة الكلية", f"{total_system_power} kW")
+    with m2:
+        st.metric("🔌 الأجهزة النشطة", f"{active_devices_count} جهاز")
 
-# ==========================================
-# 7. عرض الأقسام والصفحات بالتفصيل
-# ==========================================
-if navigation_page.startswith("1️⃣"):
-    st.subheader("🎛️ لوحة التشغيل والتحكم الافتراضي")
-    st.write("مخصصة لعرض كيفية استجابة النظام للأوامر الفورية والتحكم بالأجهزة لكل قاعة ومبنى لحظياً.")
-    st.dataframe(df_app, use_container_width=True)
+    m3, m4 = st.columns(2)
+    with m3:
+        st.metric("💰 التكلفة الشهرية", f"{monthly_bill:,.0f} IQD")
+    with m4:
+        status_text = "🛡️ حماية نشطة" if notifications else "مستقر وآمن 🟢"
+        st.metric("🔒 الأمان والشبكة", status_text)
 
-elif navigation_page.startswith("2️⃣"):
-    st.subheader("🏗️ هندسة وتعديل المباني والقاعات")
-    st.write("أثناء العرض أمام اللجنة، يمكنك هنا إضافة أو حذف المباني والقاعات لإثبات مرونة النظام.")
+    # التنبيهات والتحذيرات اللحظية
+    if notifications:
+        st.markdown("<h4 style='color: #ef4444; font-size: 14px; margin-top: 15px;'>🚨 إشعارات الحماية العاجلة</h4>", unsafe_allow_html=True)
+        for note in notifications:
+            st.error(note)
 
-    new_hall = st.text_input("اسم المبنى أو القاعة الجديدة:")
-    if st.button("إضافة المبنى ➕"):
-        if new_hall and new_hall not in st.session_state.initial_halls:
-            st.session_state.initial_halls[new_hall] = {"إضاءة رئيسية": 0.05}
-            st.success(f"تم إضافة المبنى ({new_hall}) بنجاح!")
-            st.rerun()
+    # حالة سريعة للغرف
+    st.markdown("<h4 style='color: #ffffff; font-size: 15px; margin-top: 20px; text-align: right;'>🏛️ نظرة سريعة على القاعات</h4>", unsafe_allow_html=True)
+    for room, devices in st.session_state.rooms_state.items():
+        room_pwr = round(sum(info["power"] for info in devices.values() if info["status"]), 2)
+        on_count = sum(1 for info in devices.values() if info["status"])
+        st.markdown(f"""
+        <div style="background: #0d0202; border: 1px solid #1a0606; padding: 12px 16px; border-radius: 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; direction: rtl;">
+            <div>
+                <strong style="color: #ffffff; font-size: 13px;">{room}</strong><br/>
+                <span style="color: #fbcfe8; font-size: 11px;">{on_count} أجهزة قيد التشغيل</span>
+            </div>
+            <div style="text-align: left;">
+                <span style="color: #ef4444; font-size: 14px; font-weight: bold;">{room_pwr} kW</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
-    del_hall = st.selectbox("اختر القاعة للحذف:", list(st.session_state.initial_halls.keys()))
-    if st.button("حذف القاعة 🗑️"):
-        if len(st.session_state.initial_halls) > 1:
-            del st.session_state.initial_halls[del_hall]
-            st.warning(f"تم حذف القاعة ({del_hall}).")
-            st.rerun()
-        else:
-            st.error("يجب أن تبقى قاعة واحدة على الأقل في النظام.")
+# --- الشاشة الثانية: الغرف والأجهزة (Control Deck) ---
+elif st.session_state.active_tab == "rooms":
+    # إذا لم تكن هناك غرفة نشطة محددة، اعرض قائمة القاعات كودجات ذكية قابلة للنقر
+    if st.session_state.active_room is None:
+        st.markdown("<h3 style='color: #ffffff; font-size: 16px; text-align: right; margin-bottom: 15px;'>⚙️ تحكم بالأجهزة والقاعات</h3>", unsafe_allow_html=True)
 
-elif navigation_page.startswith("3️⃣"):
-    st.subheader("📡 شاشة الحساسات الحية ومؤشرات SCADA")
-    for hall in st.session_state.initial_halls:
-        st.info(f"🏛️ **{hall}** — الحالة: متصل بنجاح عبر بروتوكول MQTT/IoT")
+        for room_name, devices in st.session_state.rooms_state.items():
+            room_pwr = round(sum(info["power"] for info in devices.values() if info["status"]), 2)
+            on_count = sum(1 for info in devices.values() if info["status"])
 
-elif navigation_page.startswith("4️⃣"):
-    st.subheader("📊 المخططات والتحليلات البيانية للأحمال")
-    c1, c2 = st.columns(2)
-    with c1:
-        if not df_hall.empty:
-            fig_bar = px.bar(df_hall, x="المبنى / القاعة", y="القدرة اللحظية (kW)", title="مقارنة قدرة المباني الحية", template="plotly_dark")
-            fig_bar.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
-            st.plotly_chart(fig_bar, use_container_width=True)
-    with c2:
-        fig_radar = go.Figure(data=go.Scatterpolar(
-            r=[load_categories["التكييف ❄️"], load_categories["الإضاءة 💡"], load_categories["أجهزة أخرى ⚙️"]],
-            theta=["التكييف ❄️", "الإضاءة 💡", "أخرى ⚙️"],
-            fill='toself',
-            line_color='#ef4444'
-        ))
-        fig_radar.update_layout(title="رادار توزيع الأحمال الهندسي", template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
-        st.plotly_chart(fig_radar, use_container_width=True)
+            # كرت الغرفة التفاعلي
+            st.markdown(f"""
+            <div class="room-card" style="direction: rtl; text-align: right;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <h4 style="margin: 0; color: #ffffff; font-size: 15px; font-weight: bold;">🏛️ {room_name}</h4>
+                    <span style="background: rgba(239, 68, 68, 0.2); color: #ef4444; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold;">{room_pwr} kW</span>
+                </div>
+                <p style="margin: 0 0 15px 0; color: #fca5a5; font-size: 12px;">يحتوي على {len(devices)} أجهزة ذكية مرتبطة بنظام SCADA.</p>
+            </div>
+            """, unsafe_allow_html=True)
 
-elif navigation_page.startswith("5️⃣"):
-    st.subheader("🏛️ التقارير المالية وجداول الاستهلاك")
-    tab1, tab2 = st.tabs(["ملخص المباني", "مصفوفة الأجهزة التفصيلية"])
-    with tab1:
-        st.dataframe(df_hall, use_container_width=True)
-    with tab2:
-        st.dataframe(df_app, use_container_width=True)
+            # زر الدخول للتحكم الفردي في الغرفة
+            if st.button(f"🔑 فتح لوحة تحكم {room_name}", key=f"enter_{room_name}", use_container_width=True):
+                st.session_state.active_room = room_name
+                st.rerun()
 
-elif navigation_page.startswith("6️⃣"):
-    st.subheader("🔔 مركز التنبيهات وحماية الشبكة")
-    for note in notifications:
-        st.warning(note)
+        # قسم إداري لإضافة غرف جديدة لتوضيح مرونة النظام أمام اللجنة
+        st.markdown("<hr style='border-top: 1px solid #1a0606; margin: 25px 0 15px 0;' />", unsafe_allow_html=True)
+        st.markdown("<h4 style='color: #ffffff; font-size: 14px; text-align: right;'>🏗️ إدارة المبنى (إضافة قاعة جديدة)</h4>", unsafe_allow_html=True)
+        new_room_name = st.text_input("اسم القاعة الجديدة:", key="new_room_input")
+        if st.button("➕ إضافة قاعة فورية", use_container_width=True):
+            if new_room_name and new_room_name not in st.session_state.rooms_state:
+                st.session_state.rooms_state[new_room_name] = {
+                    "مكيف رئيسي": {"status": True, "power": 2.0, "icon": "❄️"},
+                    "إضاءة القاعة": {"status": True, "power": 0.08, "icon": "💡"}
+                }
+                st.success(f"تمت إضافة {new_room_name} بنجاح!")
+                st.rerun()
 
-elif navigation_page.startswith("7️⃣"):
-    st.subheader("🤖 الدعم الفني وربط اللوحات المصغرة (IoT)")
-    q = st.text_input("💬 اطرح سؤالاً موجهاً للمساعد الذكي (اختبار اللجنة):")
-    if q:
-        st.success(f"💡 **تحليل المساعد:** استفسارك ('{q}') يتعلق بكفاءة التشغيل الذكي وربط اللوحات المصغرة (ESP32) بالمنصة السحابية.")
     else:
-        st.info("أهلاً بك! نظام المحاكاة جاهز بالكامل لعرضه ومناقشته أمام اللجنة.")
+        # واجهة الغرفة النشطة المحددة (تتحكم في أجهزتها بشكل منفرد بالكامل لتلائم الهاتف)
+        active_room = st.session_state.active_room
+        room_devices = st.session_state.rooms_state[active_room]
 
-elif navigation_page.startswith("📱"):
-    st.subheader("📱 دليل تثبيت التطبيق وتثبيته على شاشة الأيفون")
+        # زر العودة للخلف بتصميم مريح
+        if st.button("⬅️ عودة لقائمة الغرف", use_container_width=True):
+            st.session_state.active_room = None
+            st.rerun()
 
+        st.markdown(f"""
+        <div style="background: linear-gradient(135deg, #2b0a0a 0%, #120303 100%); padding: 18px; border-radius: 20px; border: 1px solid #ef4444; direction: rtl; text-align: right; margin: 15px 0;">
+            <h3 style="margin: 0; color: #ffffff; font-size: 16px;">🏛️ لوحة تحكم: {active_room}</h3>
+            <p style="margin: 5px 0 0 0; color: #fca5a5; font-size: 11px;">يمكنك تشغيل وإطفاء الأجهزة التالية بشكل منفرد ولحظي.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # عرض مفاتيح التشغيل والإطفاء (Toggles) لكل جهاز على حدة
+        for dev_name, info in room_devices.items():
+            st.markdown(f"**{info['icon']} {dev_name}** ({info['power']} kW)")
+            # مفتاح تحكم تبديلي تفاعلي يحدث الحالة مباشرة في الـ session state
+            is_on = st.toggle("تشغيل الجهاز", value=info["status"], key=f"toggle_{active_room}_{dev_name}")
+            if is_on != info["status"]:
+                st.session_state.rooms_state[active_room][dev_name]["status"] = is_on
+                st.rerun()
+            st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+
+        # خيار لحذف القاعة بالكامل من النظام
+        st.markdown("---")
+        if st.button("🗑️ حذف هذه القاعة بالكامل", use_container_width=True, type="secondary"):
+            if len(st.session_state.rooms_state) > 1:
+                del st.session_state.rooms_state[active_room]
+                st.session_state.active_room = None
+                st.warning(f"تم حذف {active_room} من النظام.")
+                st.rerun()
+            else:
+                st.error("لا يمكن حذف القاعة الأخيرة في النظام.")
+
+# --- الشاشة الثالثة: الذكاء الاصطناعي الكامل (AI Chatbot) ---
+elif st.session_state.active_tab == "ai":
+    st.markdown("<h3 style='color: #ffffff; font-size: 16px; text-align: right; margin-bottom: 10px;'>🤖 المساعد الذكي لنظام SCADA (الذكاء الكامل)</h3>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #fca5a5; font-size: 11px; text-align: right; margin-bottom: 15px;'>اسأل المساعد عن أي موضوع يخص المنصة، حساب الفواتير، التوصيل بالـ ESP32، أو استهلاك الطاقة وسيجيبك في الحال.</p>", unsafe_allow_html=True)
+
+    # حاوية الرسائل السابقة
+    chat_container = st.container()
+    with chat_container:
+        for msg in st.session_state.chat_history:
+            if msg["role"] == "user":
+                st.markdown(f'<div class="chat-bubble-user">{msg["content"]}</div>', unsafe_allow_html=True)
+            else:
+                st.markdown(f'<div class="chat-bubble-assistant">{msg["content"]}</div>', unsafe_allow_html=True)
+
+    st.markdown("<div style='height: 20px; clear: both;'></div>", unsafe_allow_html=True)
+
+    # حقل إدخال السؤال والدردشة التفاعلية
+    user_query = st.text_input("💬 اكتب استفسارك هنا وسيجيبك المساعد فوراً:", key="chat_input")
+
+    if st.button("🚀 إرسال السؤال", use_container_width=True):
+        if user_query:
+            # 1. إرسال سؤال المستخدم للحالة
+            st.session_state.chat_history.append({"role": "user", "content": user_query})
+
+            # 2. توليد الإجابة الذكية بناءً على الكلمات المفتاحية والسياق العام
+            query = user_query.strip().lower()
+            response = ""
+
+            if any(k in query for k in ["أهلا", "مرحبا", "سلام", "كيف حالك", "من انت", "من أنت"]):
+                response = "أهلاً بك! أنا المساعد الذكي لنظام SCADA & IoT للأحمال الذكية. أنا هنا لمساعدتك في فهم النظام، التحكم بالأجهزة، كيفية التوصيل بالـ ESP32، أو أي استفسار آخر بخصوص استهلاك الطاقة وحماية الشبكة. كيف يمكنني مساعدتك اليوم؟"
+            elif any(k in query for k in ["سكادا", "scada", "ما هو", "ماذا يفعل", "فائدة", "وظيفة", "تعريف", "تطبيق"]):
+                response = "هذا التطبيق هو نموذج محاكاة متكامل لمنصة SCADA (التحكم الإشرافي وتحصيل البيانات) لإنترنت الأشياء (IoT). يقوم بمراقبة الطاقة المستهلكة لحظياً للأجهزة في غرف التحكم، وحساب الفواتير بناءً على التعرفة، وتوفير حماية تلقائية ضد الحمل الزائد بفصل الأجهزة فوراً لمنع الحرائق أو تلف الشبكة."
+            elif any(k in query for k in ["تحكم", "تشغيل", "اطفاء", "أطفي", "اشغل", "كيف استخدم", "طريقة"]):
+                response = "للتحكم بالأجهزة، يمكنك الانتقال إلى تبويب **🎛️ الغرف**، ثم الضغط على بطاقة الغرفة المطلوبة لتفتح لك واجهة التحكم الخاصة بها. هناك ستجد مفاتيح تحكم تفاعلية (Toggles) لكل جهاز (مكيف، إضاءة، إلخ) تتيح لك تشغيله أو إطفائه فوراً لتحديث القدرة الكلية والاستهلاك لحظياً."
+            elif any(k in query for k in ["تثبيت", "تحميل", "ايفون", "أيفون", "سفاري", "safari", "pwa"]):
+                response = "لتثبيت التطبيق على جهاز iPhone الخاص بك كـ PWA: \n1. افتح رابط التطبيق في متصفح **Safari**.\n2. اضغط على زر **المشاركة (Share) 📤** في الأسفل.\n3. اختر **'إضافة إلى الشاشة الرئيسية' (Add to Home Screen) 📱**.\nسيعمل التطبيق بعدها مباشرة كواجهة كاملة الشاشة بدون حواف المتصفح وبشكل مطابق تماماً للتطبيقات الأصلية!"
+            elif any(k in query for k in ["esp32", "arduino", "اردوينو", "حساسات", "mqtt", "ربط", "لوحة", "هاردوير"]):
+                response = f"يدعم هذا النظام الربط المباشر مع لوحات **ESP32** و **Arduino** عبر بروتوكول **MQTT** خفيف الوزن. يتم توصيل مستشعرات التيار (مثل ACS712) بالـ ESP32 لترسل القراءات اللحظية عبر الإنترنت إلى لوحة التحكم هذه، والتي بدورها ترسل أوامر التحكم الفوري (Relay On/Off) للأجهزة في أجزاء من الثانية. القدرة الكلية الحالية بالنظام هي {total_system_power} kW."
+            elif any(k in query for k in ["تعرفة", "تعرفه", "استهلاك", "تكلفة", "فاتورة", "حساب", "دينار", "سعر"]):
+                response = f"يحتسب النظام التكلفة الشهرية بناءً على المعادلة الهندسية: `القدرة الكلية ({total_system_power} kW) × 8 ساعات تشغيل يومياً × 30 يوماً × سعر التعرفة ({tariff_rate} دينار/kWh)`. الاستهلاك الإجمالي للغرف حالياً هو {round(total_system_power*8*30, 2)} kWh، وهو ما يكلف {monthly_bill:,.0f} دينار عراقي شهرياً."
+            elif any(k in query for k in ["حماية", "فصل", "امان", "أمان", "overload", "حمل زائد", "تجاوز"]):
+                response = "يتميز النظام بنظام أمان آلي ذكي (Smart Trip System). إذا تجاوز إجمالي استهلاك الطاقة في أي قاعة عتبة الفصل المحددة (مثلاً 5.0 kW)، يقوم النظام تلقائياً وبشكل فوري بفصل الأجهزة الثقيلة (كالمكيفات) وإرسال تنبيه أحمر لحماية التمديدات الكهربائية من الانصهار والتلف."
+            elif any(k in query for k in ["عين", "جامعة", "لجنة", "مناقشة", "هندسة", "مشروع"]):
+                response = "هذا المشروع تم تطويره بكفاءة هندسية عالية ليمثل نموذج تخرج/أبحاث متكامل لجامعة العين - كلية الهندسة. إنه يستعرض دمج هندسة القوى الكهربائية مع أنظمة التحكم الذكي وإنترنت الأشياء، ومصمم ليكون نموذجاً رائعاً واحترافياً أمام لجنة المناقشة الموقرة."
+            elif any(k in query for k in ["توفير", "ترشيد", "نصائح", "اوفر", "تقليل"]):
+                response = "أفضل طرق توفير الطاقة في هذا النظام هي: \n1. ضبط عتبة الفصل التلقائي بدقة لمنع تشغيل الأجهزة غير الضرورية.\n2. إطفاء الإضاءة التجميلية والثانوية في أوقات عدم الحاجة.\n3. استبدال وحدات التكييف التقليدية بأخرى ذكية تدعم التعديل الترددي (Inverter).\nيساعدك نظام المراقبة لدينا على كشف القاعات الأكثر استهلاكاً لوضع خطط ترشيد فعالة."
+            else:
+                response = f"سؤالك بخصوص **'{user_query}'** مهم وممتاز جداً! في نظام SCADA وIoT للأحمال الذكية، نقوم بمعالجة هذا الجانب عبر مصفوفات الحسابات اللحظية ومقاييس البيانات الحية. حالياً، إجمالي قدرة النظام النشطة هي {total_system_power} kW وهناك {active_devices_count} أجهزة تعمل. هل تود معرفة كيف يمكننا ربط هذا المفهوم هاردويرياً ببروتوكول MQTT، أو هل ترغب في شرح تفصيلي عن كيفية توفير الطاقة بشكل ذكي؟"
+
+            st.session_state.chat_history.append({"role": "assistant", "content": response})
+            st.rerun()
+
+# --- الشاشة الرابعة: المخططات والتحليلات البيانية الرادارية ---
+elif st.session_state.active_tab == "stats":
+    st.markdown("<h3 style='color: #ffffff; font-size: 16px; text-align: right; margin-bottom: 15px;'>📊 مخططات توزيع الأحمال الذكية</h3>", unsafe_allow_html=True)
+
+    # 1. رادار توزيع الأحمال الهندسية
+    fig_radar = go.Figure(data=go.Scatterpolar(
+        r=[category_power["التكييف ❄️"], category_power["الإضاءة 💡"], category_power["أخرى ⚙️"]],
+        theta=["التكييف ❄️", "الإضاءة 💡", "أخرى ⚙️"],
+        fill='toself',
+        line_color='#ef4444'
+    ))
+    fig_radar.update_layout(
+        template="plotly_dark",
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        margin=dict(l=40, r=40, t=20, b=20),
+        height=250
+    )
+    st.plotly_chart(fig_radar, use_container_width=True)
+
+    # 2. مخطط الأعمدة لقدرة القاعات اللحظية
+    hall_names = []
+    hall_powers = []
+    for room, devices in st.session_state.rooms_state.items():
+        hall_names.append(room)
+        hall_powers.append(sum(info["power"] for info in devices.values() if info["status"]))
+
+    df_halls = pd.DataFrame({"القاعة": hall_names, "القدرة اللحظية (kW)": hall_powers})
+    fig_bar = px.bar(df_halls, x="القاعة", y="القدرة اللحظية (kW)", title="مقارنة استهلاك الطاقة الفوري", template="plotly_dark")
+    fig_bar.update_layout(
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        margin=dict(l=10, r=10, t=40, b=10),
+        height=240
+    )
+    st.plotly_chart(fig_bar, use_container_width=True)
+
+# --- الشاشة الخامسة: دليل التثبيت والمشاركة (PWA Install Manual) ---
+elif st.session_state.active_tab == "pwa":
     st.markdown(
         """
-        <div style="background-color: #170404; padding: 20px; border-radius: 16px; border: 1px solid #4a1212; direction: rtl; text-align: right;">
-            <h3 style="color: #ffffff; margin-top: 0;">كيفية تحميل وتثبيت التطبيق كـ PWA على iPhone:</h3>
-            <p>لقد قمنا بتهيئة وتطوير هذا النظام ليدعم ميزة الـ <b>Progressive Web App (PWA)</b> على نظام iOS بالكامل، لكي تفتحه وكأنه تطبيق أصيل (Native App) وبكامل دقة واجهات الأيفون بدون حواف المتصفح.</p>
+        <div style="background-color: #0d0202; padding: 20px; border-radius: 20px; border: 1px solid #4a1212; direction: rtl; text-align: right;">
+            <h3 style="color: #ffffff; margin-top: 0; font-size: 16px;">📱 دليل تثبيت التطبيق على شاشة الأيفون</h3>
+            <p style="font-size: 12px; color: #fca5a5;">لقد قمنا بتهيئة هذا النظام ليدعم ميزة الـ <b>Progressive Web App (PWA)</b> على نظام iOS بالكامل، لتشغيله كأنه تطبيق أصلي (Native App) وبأعلى دقة واجهات.</p>
 
-            <h4 style="color: #fca5a5; margin-bottom: 8px;">اتبع الخطوات البسيطة التالية:</h4>
-            <ol style="line-height: 1.8; color: #fbcfe8; padding-right: 20px;">
-                <li>قم بفتح رابط هذا التطبيق باستخدام متصفح <b>Safari</b> على هاتف الأيفون الخاص بك.</li>
-                <li>اضغط على زر <b>المشاركة (Share Button) 📤</b> الموجود في شريط الأدوات السفلي لمتصفح سفاري.</li>
+            <h4 style="color: #ef4444; margin-bottom: 8px; font-size: 13px;">الخطوات السهلة:</h4>
+            <ol style="line-height: 1.8; color: #fbcfe8; padding-right: 20px; font-size: 12px;">
+                <li>افتح رابط هذا التطبيق باستخدام متصفح <b>Safari</b> على هاتف الأيفون.</li>
+                <li>اضغط على زر <b>المشاركة (Share Button) 📤</b> الموجود في شريط الأدوات السفلي للمتصفح.</li>
                 <li>مرر للأسفل قليلاً واضغط على خيار <b>"إضافة إلى الشاشة الرئيسية" (Add to Home Screen) 📱</b>.</li>
-                <li>ستظهر لك نافذة لتسمية التطبيق، اضغط على <b>"إضافة" (Add)</b> في الزاوية العلوية اليمنى.</li>
-                <li>اذهب إلى شاشة الأيفون الرئيسية؛ ستجد أيقونة التطبيق المخصصة بـ <b>شعار الطاقة والصاعقة الذكية ⚡</b> مضافة وتعمل بلمسة واحدة في كامل الشاشة دون أشرطة تصفح!</li>
+                <li>اضغط على <b>"إضافة" (Add)</b> في الزاوية العلوية اليمنى.</li>
+                <li>اذهب إلى شاشة الأيفون الرئيسية؛ ستجد أيقونة التطبيق المخصصة بـ <b>شعار الطاقة والصاعقة الذكية ⚡</b> مضافة وتعمل بلمسة واحدة في كامل الشاشة!</li>
             </ol>
 
-            <div style="background-color: #2b0a0a; padding: 12px; border-radius: 10px; margin-top: 15px; border-right: 4px solid #ef4444;">
-                <p style="margin: 0; font-size: 13px; color: #ffffff;"><b>💡 نصيحة للجنة المناقشة:</b> عند عرض التطبيق على الهاتف مباشرة كـ PWA، سيتفاعل الـ SCADA بشكل فوري ومستقر للغاية مع اللمس وتوزيع الحساسات بشكل هندسي رائع.</p>
+            <div style="background-color: #1a0606; padding: 12px; border-radius: 12px; margin-top: 15px; border-right: 4px solid #ef4444;">
+                <p style="margin: 0; font-size: 11px; color: #ffffff;"><b>💡 نصيحة للجنة المناقشة:</b> عند عرض التطبيق كـ PWA على الهاتف مباشرة، فإنه يتفاعل بشكل فوري وبثبات متناهٍ مع اللمس المتعدد والتحكم بالأجهزة بمرونة فائقة.</p>
             </div>
         </div>
         """,
