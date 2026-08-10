@@ -17,7 +17,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-دالة لقراءة ملف الـ HTML (index.html)
+    HTML (index.html)
 
 def load_html_template(file_path):
     if os.path.exists(file_path):
