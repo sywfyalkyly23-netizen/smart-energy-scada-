@@ -4,7 +4,74 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+import streamlit as st
+import streamlit.components.v1 as components
+import json
+import os
 
+إعدادات الصفحة
+
+st.set_page_config(
+    page_title="SCADA Matrix | نظام إدارة الأحمال الذكية",
+    page_icon="⚡",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
+
+دالة لقراءة ملف الـ HTML (index.html)
+
+def load_html_template(file_path):
+    if os.path.exists(file_path):
+        with open(file_path, 'r', encoding='utf-8') as f:
+            return f.read()
+    else:
+        return """
+        
+
+⚠️ ملف index.html غير موجود
+
+يرجى التأكد من وضع ملف index.html في نفس مجلد ملف البايثون.
+        """
+
+محاكاة لبيانات النظام (هنا يمكنك ربط قاعدة بياناتك أو مستشعراتك)
+
+system_data = {
+    "current_load": "45.8 kW",
+    "daily_cost": "124.50 SAR",
+    "active_devices": 12,
+    "alerts_count": 3
+}
+
+def main():
+    # عنوان التطبيق في Streamlit (مخفي لأننا نستخدم واجهة HTML مخصصة)
+    st.markdown("""
+        
+
+
+    """, unsafe_allow_html=True)
+
+# تحميل الكود من ملف index.html
+# ملاحظة: تأكد أن ملف index.html موجود في نفس المسار
+html_content = load_html_template("index.html")
+
+# (اختياري) يمكنك استبدال متغيرات داخل الـ HTML ببيانات من بايثون
+# مثال: html_content = html_content.replace("{{LOAD}}", system_data["current_load"])
+
+# عرض الواجهة داخل Streamlit
+# نستخدم height=900 ليتناسب مع أبعاد شاشات الموبايل أو العرض الكامل
+components.html(html_content, height=850, scrolling=True)
+
+# عرض بيانات إضافية في Sidebar (اختياري)
+with st.sidebar:
+    st.header("⚙️ إعدادات النظام")
+    st.write(f"الحمل الحالي: {system_data['current_load']}")
+    st.write(f"التكلفة اليومية: {system_data['daily_cost']}")
+    
+    if st.button("تحديث البيانات"):
+        st.rerun()
+
+if name == "main":
+    main()
 # ==========================================
 # 1. إعدادات الصفحة ودمج ملف الـ HTML الخارجي لـ iPhone (PWA Setup)
 # ==========================================
