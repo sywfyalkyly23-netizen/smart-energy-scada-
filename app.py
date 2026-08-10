@@ -38,9 +38,9 @@ def load_html_template(file_path):
 يرجى التأكد من وضع ملف index.html في نفس مجلد ملف البايثون.
         """
 
-محاكاة لبيانات النظام #(هنا يمكنك ربط قاعدة بياناتك أو مستشعراتك)
+ #(هنا يمكنك ربط قاعدة بياناتك أو مستشعراتك) # 
 
-system_data = {
+system_#data = {
     "current_load": "45.8 kW",
     "daily_cost": "124.50 SAR",
     "active_devices": 12,
