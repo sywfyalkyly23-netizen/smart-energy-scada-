@@ -4,7 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 import os
-pip install -r requirements.txt
+
 
 # ==========================================
 # 1. تهيئة وترقية واجهة الاستخدام لتطبيق iPhone (iOS PWA Setup)
