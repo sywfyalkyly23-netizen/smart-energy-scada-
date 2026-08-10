@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة الطاقة الذكية - SCADA Matrix</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; background-color: #0f172a; color: #f8fafc; }
+        .section-view { display: none; }
+        .section-view.active { display: block; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col">
+
+    <!-- شريط التنقل العلوي -->
+    <header class="bg-slate-800 border-b border-slate-700 p-4 flex justify-between items-center">
+        <h1 class="text-xl font-bold text-emerald-400">⚡ SCADA Matrix Dashboard</h1>
+        <nav class="flex gap-2 overflow-x-auto pb-1 text-sm">
+            <button onclick="showSection('login')" class="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded">الدخول</button>
+            <button onclick="showSection('dashboard')" class="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded">الرئيسية</button>
+            <button onclick="showSection('analytics')" class="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded">التحليلات</button>
+            <button onclick="showSection('alerts')" class="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded">التنبيهات</button>
+            <button onclick="showSection('controls')" class="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded">التحكم</button>
+            <button onclick="showSection('reports')" class="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded">التقارير</button>
+            <button onclick="showSection('prediction')" class="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded">التنبؤ الذكي</button>
+            <button onclick="showSection('comparison')" class="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded">المقارنة</button>
+        </nav>
+    </header>
+
+    <!-- محتوى الشاشات -->
+    <main class="flex-1 p-6 max-w-7xl mx-auto w-full">
+        
+        <!-- 1. شاشة تسجيل الدخول -->
+        <section id="login" class="section-view active max-w-md mx-auto bg-slate-800 p-8 rounded-2xl border border-slate-700 shadow-xl mt-10">
+            <h2 class="text-2xl font-bold mb-6 text-center text-emerald-400">تسجيل الدخول - نظام الأحمال</h2>
+            <div class="space-y-4">
+                <input type="text" placeholder="اسم المستخدم" class="w-full p-3 rounded bg-slate-900 border border-slate-700 text-white">
+                <input type="password" placeholder="كلمة المرور" class="w-full p-3 rounded bg-slate-900 border border-slate-700 text-white">
+                <button onclick="showSection('dashboard')" class="w-full py-3 bg-emerald-500 hover:bg-emerald-600 font-bold rounded text-slate-950 transition">دخول النظام</button>
+            </div>
+        </section>
+
+        <!-- 2. لوحة التحكم (الرئيسية) -->
+        <section id="dashboard" class="section-view space-y-6">
+            <h2 class="text-2xl font-bold text-emerald-400">لوحة التحكم - الأحمال الذكية</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-slate-800 p-6 rounded-xl border border-slate-700">استهلاك الطاقة الكلي: <span class="text-emerald-400 font-bold">42.5 kW</span></div>
+                <div class="bg-slate-800 p-6 rounded-xl border border-slate-700">حالة الشبكة: <span class="text-blue-400 font-bold">مستقرة</span></div>
+                <div class="bg-slate-800 p-6 rounded-xl border border-slate-700">التكلفة الحالية: <span class="text-yellow-400 font-bold">1,250 د.ع / ساعة</span></div>
+            </div>
+        </section>
+
+        <!-- 3. تحليلات الشبكة والأحمال -->
+        <section id="analytics" class="section-view space-y-6">
+            <h2 class="text-2xl font-bold text-emerald-400">تحليلات الأحمال</h2>
+            <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 h-64 flex items-center justify-center text-slate-400">
+                [رسوم بيانية تفصيلية لاستهلاك الشبكة على مدار اليوم]
+            </div>
+        </section>
+
+        <!-- 4. تنبيهات النظام وسجلات الحماية -->
+        <section id="alerts" class="section-view space-y-4">
+            <h2 class="text-2xl font-bold text-emerald-400">تنبيهات النظام</h2>
+            <div class="bg-red-950/40 border border-red-700/50 p-4 rounded-lg">⚠️ تحذير: ارتفاع الأحمال في القاعة الرئيسية (تجاوز الحد الآمن).</div>
+            <div class="bg-yellow-950/40 border border-yellow-700/50 p-4 rounded-lg">⚡ تنبيه: تحويل الطاقة إلى مولد الاحتياط (UPS).</div>
+        </section>
+
+        <!-- 5. التحكم بالأجهزة والقطاعات -->
+        <section id="controls" class="section-view space-y-6">
+            <h2 class="text-2xl font-bold text-emerald-400">التحكم بالأجهزة</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 text-center">
+                    <p class="font-bold mb-2">إضاءة القاعة أ</p>
+                    <button onclick="alert('تم تغيير الحالة')" class="px-4 py-2 bg-emerald-500 text-slate-950 rounded font-bold">تشغيل / إيقاف</button>
+                </div>
+                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 text-center">
+                    <p class="font-bold mb-2">أجهزة التكييف</p>
+                    <button onclick="alert('تم تغيير الحالة')" class="px-4 py-2 bg-emerald-500 text-slate-950 rounded font-bold">تشغيل / إيقاف</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. التقارير المالية وحساب التكلفة -->
+        <section id="reports" class="section-view space-y-6">
+            <h2 class="text-2xl font-bold text-emerald-400">التقارير المالية والاستهلاك</h2>
+            <div class="bg-slate-800 p-6 rounded-xl border border-slate-700">
+                <p>إجمالي استهلاك الشهر الحالي: <span class="font-bold text-emerald-400">1,420 kWh</span></p>
+                <p>التكلفة التقديرية للفاتورة: <span class="font-bold text-yellow-400">142,000 د.ع</span></p>
+            </div>
+        </section>
+
+        <!-- 7. التنبؤ بالذكاء الاصطناعي -->
+        <section id="prediction" class="section-view space-y-6">
+            <h2 class="text-2xl font-bold text-emerald-400">التنبؤ بالأحمال المستقبلية</h2>
+            <div class="bg-slate-800 p-6 rounded-xl border border-slate-700">
+                <p class="text-slate-300">🤖 نموذج الذكاء الاصطناعي يتوقع ذروة الاستهلاك اليوم في تمام الساعة 2:00 ظهراً.</p>
+            </div>
+        </section>
+
+        <!-- 8. مقارنة استهلاك القاعات -->
+        <section id="comparison" class="section-view space-y-6">
+            <h2 class="text-2xl font-bold text-emerald-400">مقارنة استهلاك القاعات</h2>
+            <div class="bg-slate-800 p-6 rounded-xl border border-slate-700">
+                <p>قاعة الحاسوب: 12 kW | القاعة الكبرى: 18 kW | المختبرات: 12.5 kW</p>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        function showSection(sectionId) {
+            document.querySelectorAll('.section-view').forEach(el => el.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+        }
+    </script>
+</body>
+</html>
