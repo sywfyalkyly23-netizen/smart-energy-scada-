@@ -4,10 +4,8 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
-import streamlit as st
 import streamlit.components.v1 as components
 import json
-import os
 
 
 st.set_page_config(
@@ -16,14 +14,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
-import streamlit.components.v1 as components
-
-# الطريقة الصحيحة لقراءة وعرض ملف HTML في ستريمليت
-with open("index.html", "r", encoding="utf-8") as f:
-    html_content = f.read()
-
-components.html(html_content, height=800, scrolling=True)
-
 
 def load_html_template(file_path):
     if os.path.exists(file_path):
@@ -38,9 +28,9 @@ def load_html_template(file_path):
 يرجى التأكد من وضع ملف index.html في نفس مجلد ملف البايثون.
         """
 
- #(هنا يمكنك ربط قاعدة بياناتك أو مستشعراتك) # 
+# (هنا يمكنك ربط قاعدة بياناتك أو مستشعراتك)
 
-system_#data = {
+system_data = {
     "current_load": "45.8 kW",
     "daily_cost": "124.50 SAR",
     "active_devices": 12,
@@ -75,16 +65,11 @@ with st.sidebar:
     if st.button("تحديث البيانات"):
         st.rerun()
 
-if name == "main":
+if __name__ == "__main__":
     main()
 # ==========================================
 # 1. إعدادات الصفحة ودمج ملف الـ HTML الخارجي لـ iPhone (PWA Setup)
 # ==========================================
-st.set_page_config(
-    page_title="نظام محاكاة وإدارة الأحمال الذكية",
-    layout="wide",
-    page_icon="⚡"
-)
 
 def load_external_pwa_index():
     try:
