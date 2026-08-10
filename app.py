@@ -16,6 +16,13 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
+import streamlit.components.v1 as components
+
+# الطريقة الصحيحة لقراءة وعرض ملف HTML في ستريمليت
+with open("index.html", "r", encoding="utf-8") as f:
+    html_content = f.read()
+
+components.html(html_content, height=800, scrolling=True)
 
     HTML (index.html)
 
