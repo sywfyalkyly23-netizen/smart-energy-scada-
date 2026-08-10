@@ -9,7 +9,6 @@ import streamlit.components.v1 as components
 import json
 import os
 
-إعدادات الصفحة
 
 st.set_page_config(
     page_title="SCADA Matrix | نظام إدارة الأحمال الذكية",
